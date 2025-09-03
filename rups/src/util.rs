@@ -81,7 +81,7 @@ impl<'a> TryInto<crate::Host> for UpsdName<'a> {
 impl<'a> fmt::Display for UpsdName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(upsname) = self.upsname {
-            write!(f, "{}@", upsname)?;
+            write!(f, "{upsname}@")?;
         }
         write!(f, "{}:{}", self.hostname, self.port)
     }

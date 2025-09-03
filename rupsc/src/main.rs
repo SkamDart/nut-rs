@@ -72,9 +72,13 @@ fn main() -> anyhow::Result<()> {
         )
         .get_matches();
 
-    let server: UpsdName = args.get_one::<UpsdName>("upsd-server").map_or_else(
+    let server: UpsdName = args.get_one::<String>("upsd-server").map_or_else(
         || Ok::<UpsdName, anyhow::Error>(UpsdName::default()),
-        |s| Ok(*s),
+        |s| {
+            s.as_str()
+                .try_into()
+                .with_context(|| "Invalid upsd server name")
+        },
     )?;
 
     let debug = args.get_flag("debug");
