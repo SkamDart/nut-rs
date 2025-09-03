@@ -6,103 +6,103 @@
 use core::convert::TryInto;
 
 use anyhow::Context;
-use clap::{App, Arg};
+use clap::{Arg, Command};
 
 use rups::UpsdName;
 
 mod cmd;
 
 fn main() -> anyhow::Result<()> {
-    let args = App::new(clap::crate_name!())
-        .version(clap::crate_version!())
-        .author(clap::crate_authors!())
-        .about(clap::crate_description!())
+    let args = Command::new(env!("CARGO_CRATE_NAME"))
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
-            Arg::with_name("list")
-                .short("l")
+            Arg::new("list")
+                .short('l')
                 .conflicts_with_all(&["list-full", "clients"])
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Lists each UPS on <hostname>, one per line."),
         )
         .arg(
-            Arg::with_name("list-full")
-                .short("L")
+            Arg::new("list-full")
+                .short('L')
                 .conflicts_with_all(&["list", "clients"])
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Lists each UPS followed by its description (from ups.conf)."),
         )
         .arg(
-            Arg::with_name("clients")
-                .short("c")
+            Arg::new("clients")
+                .short('c')
                 .conflicts_with_all(&["list", "list-full"])
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Lists each client connected on <upsname>, one per line."),
         )
         .arg(
-            Arg::with_name("debug")
-                .short("D")
+            Arg::new("debug")
+                .short('D')
                 .long("debug")
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Enables debug mode (logs network commands to stderr)."),
         )
         .arg(
-            Arg::with_name("ssl")
-                .short("S")
+            Arg::new("ssl")
+                .short('S')
                 .long("ssl")
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Enables SSL on the connection with upsd."),
         )
         .arg(
-            Arg::with_name("insecure-ssl")
+            Arg::new("insecure-ssl")
                 .long("insecure-ssl")
-                .takes_value(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Disables SSL verification on the connection with upsd."),
         )
         .arg(
-            Arg::with_name("upsd-server")
+            Arg::new("upsd-server")
                 .required(false)
                 .value_name("[upsname][@<hostname>[:<port>]]")
                 .help("upsd server (with optional upsname, if applicable)."),
         )
         .arg(
-            Arg::with_name("variable")
+            Arg::new("variable")
                 .required(false)
                 .value_name("variable")
                 .help("Optional, display this variable only."),
         )
         .get_matches();
 
-    let server: UpsdName = args.value_of("upsd-server").map_or_else(
-        || Ok(UpsdName::default()),
-        |s| s.try_into().with_context(|| "Invalid upsd server name"),
+    let server: UpsdName = args.get_one::<UpsdName>("upsd-server").map_or_else(
+        || Ok::<UpsdName, anyhow::Error>(UpsdName::default()),
+        |s| Ok(*s),
     )?;
 
-    let debug = args.is_present("debug");
-    let insecure_ssl = args.is_present("insecure-ssl");
-    let ssl = insecure_ssl || args.is_present("ssl");
+    let debug = args.get_flag("debug");
+    // let insecure_ssl = args.is_present("insecure-ssl");
+    // let ssl = insecure_ssl || args.is_present("ssl");
 
     let host = server.try_into()?;
     let config = rups::ConfigBuilder::new()
         .with_host(host)
         .with_debug(debug)
-        .with_ssl(ssl)
-        .with_insecure_ssl(insecure_ssl)
+        // .with_ssl(ssl)
+        // .with_insecure_ssl(insecure_ssl)
         .build();
 
-    if args.is_present("list") {
+    if args.get_flag("list") {
         return cmd::list_devices(config, false);
     }
 
-    if args.is_present("list-full") {
+    if args.get_flag("list-full") {
         return cmd::list_devices(config, true);
     }
 
-    if args.is_present("clients") {
+    if args.get_flag("clients") {
         return cmd::list_clients(config, get_ups_name(&server)?);
     }
 
     // Fallback: prints one variable (or all of them)
-    if let Some(variable) = args.value_of("variable") {
+    if let Some(variable) = args.get_one::<String>("variable") {
         cmd::print_variable(config, get_ups_name(&server)?, variable)
     } else {
         cmd::list_variables(config, get_ups_name(&server)?)

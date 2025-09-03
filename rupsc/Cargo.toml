@@ -19,4 +19,4 @@ anyhow = "1"
 [dependencies.rups]
 version = "0.7.0"
 path = "../rups"
-features = ["ssl"]
+# features = ["ssl"]

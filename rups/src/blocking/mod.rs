@@ -87,9 +87,9 @@ impl TcpConnection {
                         crate::ssl::InsecureCertificateValidator::new(&self.config),
                     ));
 
-                let dns_name = webpki::DNSNameRef::try_from_ascii_str("www.google.com").unwrap();
+                let dns_name = webpki::DnsNameRef::try_from_ascii_str("www.google.com").unwrap();
 
-                rustls::ClientSession::new(&std::sync::Arc::new(ssl_config), dns_name)
+                rustls::ClientConnection::new(&std::sync::Arc::new(ssl_config), dns_name)
             } else {
                 // Try to get hostname as given (e.g. localhost can be used for strict SSL, but not 127.0.0.1)
                 let hostname = self
@@ -98,14 +98,14 @@ impl TcpConnection {
                     .hostname()
                     .ok_or(ClientError::Nut(NutError::SslInvalidHostname))?;
 
-                let dns_name = webpki::DNSNameRef::try_from_ascii_str(&hostname)
+                let dns_name = webpki::DnsNameRef::try_from_ascii_str(&hostname)
                     .map_err(|_| ClientError::Nut(NutError::SslInvalidHostname))?;
 
                 ssl_config
                     .root_store
                     .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
 
-                rustls::ClientSession::new(&std::sync::Arc::new(ssl_config), dns_name)
+                rustls::ClientConnection::new(&std::sync::Arc::new(ssl_config), dns_name)
             };
 
             // Wrap and override the TCP stream

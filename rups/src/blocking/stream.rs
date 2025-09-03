@@ -8,13 +8,13 @@ pub enum ConnectionStream {
 
     /// A stream wrapped with SSL using `rustls`.
     #[cfg(feature = "ssl")]
-    Ssl(Box<rustls::StreamOwned<rustls::ClientSession, ConnectionStream>>),
+    Ssl(Box<rustls::StreamOwned<rustls::ClientConnection, ConnectionStream>>),
 }
 
 impl ConnectionStream {
     /// Wraps the current stream with SSL using `rustls`.
     #[cfg(feature = "ssl")]
-    pub fn upgrade_ssl(self, session: rustls::ClientSession) -> crate::Result<ConnectionStream> {
+    pub fn upgrade_ssl(self, session: rustls::ClientConnection) -> crate::Result<ConnectionStream> {
         Ok(ConnectionStream::Ssl(Box::new(rustls::StreamOwned::new(
             session, self,
         ))))
