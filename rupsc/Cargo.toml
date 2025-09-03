@@ -13,10 +13,10 @@ license = "GPL-3.0-or-later"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "2.33.3"
+clap = "4.5.47"
 anyhow = "1"
 
 [dependencies.rups]
-version = "0.6.1"
+version = "0.7.0"
 path = "../rups"
 features = ["ssl"]
