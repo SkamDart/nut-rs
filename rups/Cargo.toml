@@ -23,7 +23,7 @@ tokio-rustls = { version = "0.26", optional = true }
 
 [features]
 default = []
-ssl = ["rustls", "rustls/dangerous_configuration", "webpki", "webpki-roots"]
+ssl = ["rustls", "webpki", "webpki-roots"]
 async = ["tokio"]
 async-ssl = ["async", "tokio-rustls", "ssl"]
 write = []
